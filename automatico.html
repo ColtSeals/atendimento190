@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inteligência Artificial - Teste de API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e1e2f, #2a2a4a);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #00d4ff;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .chat-area {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            background: #00d4ff;
+            color: #1e1e2f;
+            margin-left: auto;
+        }
+
+        .ai-message {
+            background: #ffffff;
+            color: #1e1e2f;
+            margin-right: auto;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 1em;
+            outline: none;
+            transition: background 0.3s;
+        }
+
+        input[type="text"]:focus {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            background: #00d4ff;
+            color: #1e1e2f;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+        }
+
+        button:hover {
+            background: #00b8d9;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Inteligência Artificial</h1>
+        <div class="chat-area" id="chatArea"></div>
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Digite sua mensagem...">
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        const chatArea = document.getElementById('chatArea');
+        const messageInput = document.getElementById('messageInput');
+        let conversationId = Math.random().toString(36).substr(2, 9);
+
+        function addMessage(text, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(isUser ? 'user-message' : 'ai-message');
+            messageDiv.textContent = text;
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text) return;
+
+            addMessage(text, true);
+            messageInput.value = '';
+
+            try {
+                const response = await fetch('https://n8n-n8n.rbumc4.easypanel.host/webhook/verificar_ocorrencia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: conversationId, text: text })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na API: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                if (data.permitido) {
+                    addMessage(data.output || 'Nenhuma resposta recebida da API');
+                } else {
+                    addMessage("Este tipo de ocorrência não pode ser registrada aqui. Por favor, ligue para o 190.");
+                }
+            } catch (error) {
+                addMessage(`Erro ao conectar com a API: ${error.message}`);
+                console.error('Detalhes do erro:', error);
+            }
+        }
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
