@@ -1,0 +1,36 @@
+async function sendMessage() {
+    const text = messageInput.value.trim();
+    if (!text) return;
+
+    addMessage(text, true);
+    messageInput.value = '';
+
+    try {
+        const response = await fetch('https://n8n-n8n.rbumc4.easypanel.host/webhook/atendimento', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: conversationId,
+                text: text,
+                context: "O foco do atendimento é 'som alto, barulho ou algazarra'. Caso o usuário mencione crimes como roubo, agressão, briga ou situações graves, avise que esta ocorrência não se encaixa na categoria e peça para confirmar o tipo correto."
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erro na API: ${response.status} - ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const aiResponse = data.output || 'Nenhuma resposta recebida da API';
+
+        // Se a resposta da IA indicar um desvio de assunto, exibir alerta
+        if (aiResponse.includes("não se encaixa na categoria")) {
+            alert("Parece que sua descrição envolve algo mais grave que som alto. Por favor, revise a ocorrência.");
+        }
+
+        addMessage(aiResponse);
+    } catch (error) {
+        addMessage(`Erro ao conectar com a API: ${error.message}`);
+        console.error('Detalhes do erro:', error);
+    }
+}
